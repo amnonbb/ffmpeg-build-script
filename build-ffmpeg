@@ -367,6 +367,19 @@ if build "openssl"; then
 	build_done "openssl"
 fi
 
+if build "librtmp"; then
+	cd "$PACKAGES"
+	git clone https://github.com/amnonbb/RTMPDump-OpenSSL-1.1.git
+        cd "$PACKAGES"/RTMPDump-OpenSSL-1.1/librtmp
+	sed -i "/INC=.*/d" ./Makefile # Remove INC if present from previous run.
+	sed -i "s/prefix=.*/prefix=${WORKSPACE}\nINC=-I\$(prefix)\/include/" ./Makefile
+	sed -i "s/SHARED=.*/SHARED=no/" ./Makefile
+	make
+	make install_base
+        build_done "librtmp"
+fi
+
+
 CFLAGS="-I$WORKSPACE/include"
 LDFLAGS="-L$WORKSPACE/lib"
 if command -v nvcc > /dev/null ; then
@@ -383,8 +396,8 @@ if command -v nvcc > /dev/null ; then
 fi
 
 build "ffmpeg"
-download "https://ffmpeg.org/releases/ffmpeg-4.3.tar.bz2" "ffmpeg-4.3.tar.bz2"
-cd "$PACKAGES"/ffmpeg-4.3/ || exit
+download "https://ffmpeg.org/releases/ffmpeg-4.3.1.tar.bz2" "ffmpeg-4.3.1.tar.bz2"
+cd "$PACKAGES"/ffmpeg-4.3.1/ || exit
 # shellcheck disable=SC2086
 ./configure $ADDITIONAL_CONFIGURE_OPTIONS \
     --pkgconfigdir="$WORKSPACE/lib/pkgconfig" \
@@ -405,7 +418,7 @@ cd "$PACKAGES"/ffmpeg-4.3/ || exit
 	--enable-pthreads \
 	--enable-libvpx \
 	--enable-libmp3lame \
-    --enable-libopus \
+	--enable-libopus \
 	--enable-libtheora \
 	--enable-libvorbis \
 	--enable-libx264 \
@@ -417,7 +430,8 @@ cd "$PACKAGES"/ffmpeg-4.3/ || exit
 	--enable-libopencore_amrnb \
 	--enable-filters \
 	--enable-libvidstab \
-	--enable-libaom
+	--enable-libaom \
+	--enable-librtmp
 
 execute make -j $MJOBS
 execute make install
